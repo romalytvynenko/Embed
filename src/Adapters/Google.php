@@ -22,6 +22,7 @@ class Google extends Webpage
             'calendar.google.com/calendar/*',
             'drive.google.com/file/*/view',
             'plus.google.com/*/posts/*',
+            'docs.google.com/*'
         ]);
     }
 
@@ -52,7 +53,7 @@ class Google extends Webpage
                 .'<div class="g-post" data-href="'.$url.'"></div>';
         }
 
-        if ($url->getHost() === 'calendar.google.com') {
+        if ($url->getHost() === 'calendar.google.com' || $url->getHost() === 'docs.google.com') {
             return Utils::iframe($url);
         }
 
