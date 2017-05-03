@@ -238,7 +238,7 @@ class CurlDispatcher implements DispatcherInterface
                         Url::create($result['url']),
                         $result['statusCode'],
                         $result['contentType'],
-                        [$result['data']->width, $result['data']->height],
+                        [$result['data']->width ?? 0, $result['data']->height ?? 0],
                         $result['headers'],
                         $result['info']
                     );
