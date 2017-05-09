@@ -661,4 +661,16 @@ abstract class Adapter implements DataInterface
 
         return $all;
     }
+    
+    /**
+     * Remove a specific provider if you are not satisfied with the results of that provider
+     * @param $id
+     */
+    public function removeProvider($id)
+    {
+        if (isset($this->providers[$id])) {
+            unset($this->providers[$id]);
+            $this->code = null;
+        }
+    }
 }
