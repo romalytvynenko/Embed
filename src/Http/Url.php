@@ -69,11 +69,22 @@ class Url
         }
 
         //Remove scheme and query
-        $url = preg_replace('|(\?.*)?$|', '', (string) $this);
-        $url = preg_replace('|^(\w+://)|', '', $url);
+        $long_url = preg_replace('|^(\w+://)|', '', (string) $this);
+        $short_url = preg_replace('|(\?.*)?$|', '', $long_url);
 
         foreach ($patterns as $pattern) {
-            $pattern = str_replace(['\\*', '\\?'], ['.+', '?'], preg_quote($pattern, '|'));
+            if ($pattern[0] === '?') { // ?hello=world => *?hello=world
+                $pattern = '*' . $pattern;
+            }
+
+            $pattern = str_replace('\\*', '.*', preg_quote($pattern, '|'));
+
+            if (strpos($pattern, '?') === false) {
+                $url = $short_url;
+            } else {
+                $pattern = str_replace('\\?&', '[\\?&]', $pattern);
+                $url = $long_url;
+            }
 
             if (preg_match('|^'.$pattern.'$|i', $url)) {
                 return true;
@@ -302,10 +313,10 @@ class Url
      */
     public function getPath()
     {
-        $path = !empty($this->info['path']) ? '/'.implode('/', array_map('urlencode', $this->info['path'])).'/' : '/';
+        $path = !empty($this->info['path']) ? '/'.implode('/', array_map('self::urlEncode', $this->info['path'])).'/' : '/';
 
         if (isset($this->info['file'])) {
-            $path .= urlencode($this->info['file']);
+            $path .= self::urlEncode($this->info['file']);
 
             if (isset($this->info['extension'])) {
                 $path .= '.'.$this->info['extension'];
@@ -488,7 +499,7 @@ class Url
         $url .= $this->getPath();
 
         if (!empty($this->info['query'])) {
-            $url .= '?'.http_build_query($this->info['query']);
+            $url .= '?'.rtrim(http_build_query($this->info['query']), '=');
         }
         if (isset($this->info['fragment'])) {
             $url .= '#'.$this->info['fragment'];
@@ -553,22 +564,22 @@ class Url
         }
 
         if (preg_match('|^\w+://|', $url)) {
-            return $url;
+            return self::validUrlOrEmpty($url);
         }
 
         if (strpos($url, '://') === 0) {
-            return $this->getScheme().$url;
+            return self::validUrlOrEmpty($this->getScheme().$url);
         }
 
         if (strpos($url, '//') === 0) {
-            return $this->getScheme().":$url";
+            return self::validUrlOrEmpty($this->getScheme().":$url");
         }
 
         if ($url[0] === '/') {
-            return $this->getScheme().'://'.$this->getHost().$url;
+            return self::validUrlOrEmpty($this->getScheme().'://'.$this->getHost().$url);
         }
 
-        return $this->getScheme().'://'.$this->getHost().$this->getDirectories().$url;
+        return self::validUrlOrEmpty($this->getScheme().'://'.$this->getHost().$this->getDirectories().$url);
     }
 
     /**
@@ -643,10 +654,26 @@ class Url
             throw new \InvalidArgumentException('Malformed URL: ' . $url);
         }
 
-        foreach($parts as $name => $value) {
+        if (!empty($parts['scheme']) && !in_array($parts['scheme'], ['http', 'https', 'data'])) {
+            throw new \InvalidArgumentException(sprintf('Invalid URL scheme: "%s"', $parts['scheme']));
+        }
+
+        foreach ($parts as $name => $value) {
             $parts[$name] = urldecode($value);
         }
 
         return $parts;
+    }
+
+    private static function urlEncode($path)
+    {
+        // : - used for files
+        // @ and , - used for GoogleMaps adapter url (in view and streetview modes)
+        return str_replace(['%3A','%40','%2C'], [':','@',','], urlencode($path));
+    }
+
+    private static function validUrlOrEmpty($url)
+    {
+        return parse_url($url) === false ? '' : $url;
     }
 }

@@ -4,31 +4,21 @@ ini_set('display_startup_errors', '1');
 
 include __DIR__.'/../vendor/autoload.php';
 
-$options = [
-    'min_image_width' => 60,
-    'min_image_height' => 60,
-    'images_blacklist' => null,
-    'choose_bigger_image' => false,
+// Use default config as template
+$options = \Embed\Embed::$default_config;
+// Do some config modifications
+$options['min_image_width'] = 60;
+$options['min_image_height'] = 60;
+$options['html']['max_images'] = 10;
+$options['html']['external_images'] = false;
 
-    'html' => [
-        'max_images' => 10,
-        'external_images' => false
-    ],
+//use env variables
+if (is_file(__DIR__.'/../env.php')) {
+    include __DIR__.'/../env.php';
 
-    'oembed' => [
-        'parameters' => [],
-        'embedly_key' => null,
-        'iframely_key' => null,
-    ],
-
-    'google' => [
-        'key' => null,
-    ],
-
-    'soundcloud' => [
-        'key' => null,
-    ],
-];
+    $options['google']['key'] = getenv('GOOGLE_KEY');
+    $options['facebook']['key'] = getenv('FACEBOOK_KEY');
+}
 
 function getUrl()
 {
@@ -212,7 +202,7 @@ $adapterData = [
                 &nbsp;&nbsp;&nbsp;
                 <a href="https://github.com/oscarotero/Embed/">Get the source code from Github</a>
                 &nbsp;&nbsp; - &nbsp;&nbsp;
-                <a href="javascript:(function(){window.open('http://oscarotero.com/embed2/demo/index.php?url='+document.location)})();">or the bookmarklet</a>
+                <a href="javascript:(function(){window.open('http://oscarotero.com/embed3/demo/index.php?url='+document.location)})();">or the bookmarklet</a>
             </fieldset>
         </form>
 
@@ -260,26 +250,25 @@ $adapterData = [
                 <?php foreach ($info->getProviders() as $providerName => $provider): ?>
                 <h2><?php echo $providerName; ?> provider</h2>
 
+                <?php if (empty($provider->getBag()->getAll())): ?>
+                <p>No data collected</p>
+                <?php continue; ?>
+                <?php endif ?>
+
                 <table>
                     <?php foreach ($providerData as $name => $fn): ?>
+                    <?php if (!empty($provider->{'get'.$name}())): ?>
                     <tr>
                         <th><?php echo $providerName.'.'.$name; ?></th>
                         <td><?php $fn($provider->{'get'.$name}(), false); ?></td>
                     </tr>
+                    <?php endif ?>
                     <?php endforeach ?>
 
                     <tr>
                         <th>All data collected</th>
                         <td><?php printArray($provider->getBag()->getAll()); ?></td>
                     </tr>
-
-                    <?php if (isset($provider->api)): ?>
-                    <tr>
-                        <th>Data provider by the API</th>
-                        <td><?php printArray($provider->api->getAll()); ?></td>
-                    </tr>
-                    <?php endif ?>
-
                 </table>
                 <?php endforeach ?>
 
@@ -297,7 +286,10 @@ $adapterData = [
                         </th>
                     </tr>
                     <tr>
-                        <td><?php printHeaders($response->getHeaders()); ?></td>
+                        <td>
+                            <?php printHeaders($response->getHeaders()); ?>
+                            <?php printArray($response->getInfo()); ?>
+                        </td>
                     </tr>
                     <?php endforeach ?>
                 </table>

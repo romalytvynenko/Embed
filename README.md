@@ -17,7 +17,7 @@ Requirements:
 * PHP 5.5+
 * Curl library installed
 
-> 
+>
 * If you need PHP 5.3 support, use the 1.x version
 * If you need PHP 5.4 support, use the 2.x version
 
@@ -61,7 +61,7 @@ $info->width; //The width of the embed code
 $info->height; //The height of the embed code
 $info->aspectRatio; //The aspect ratio (width/height)
 
-$info->authorName; //The resource author 
+$info->authorName; //The resource author
 $info->authorUrl; //The author url
 
 $info->providerName; //The provider name of the page (Youtube, Twitter, Instagram, etc)
@@ -87,8 +87,11 @@ Name | Type | Description
 -----|------|------------
 `min_image_width` | `int` | Minimal image width used to choose the main image
 `min_image_height` | `int` | Minimal image height used to choose the main image
-`images_blacklist` | `string|array` | Images that you don't want to be used. Could be plain text or [Uri](https://github.com/oscarotero/Embed/blob/master/src/Uri.php) match pattern.
 `choose_bigger_image` | `bool` | Choose the bigger image as the main image (instead the first found, that usually is the most relevant).
+`images_blacklist` | `string`&#124;`array` | Images that you don't want to be used. Could be plain text or [Uri](https://github.com/oscarotero/Embed/blob/master/src/Http/Url.php) match pattern.
+`url_blacklist` | `string`&#124;`array` | URLs that you don't want to be used. Could be plain text or [Uri](https://github.com/oscarotero/Embed/blob/master/src/Http/Url.php) match pattern.
+`follow_canonical` | `bool` | Whether to redirect to the canonical URL or not.
+`custom_adapters_namespace` | `string`&#124;`array` | A namespace used to load custom adapters. This allows to override the behaviour of existing adapters or add support for more sites.
 
 ## The providers
 
@@ -111,7 +114,7 @@ Used to get data directly from the html code of the page:
 Name | Type | Description
 -----|------|------------
 `max_images` | `int` | Max number of images fetched from the html code (searching for the `<img>` elements). By default is -1 (no limit). Use 0 to no get images.
-`external_images` | `bool|array` | By default is false, this means that images located in other domains are not allowed. You can set true (allow all) or provide an array of url patterns.
+`external_images` | `bool`&#124;`array` | By default is `false`, this means that images located in other domains are not allowed. You can set `true` (allow all) or provide an array of url patterns.
 
 ### google
 
@@ -129,6 +132,16 @@ Name | Type | Description
 -----|------|------------
 `key` | `string` | The key used to get info from soundcloud API.
 
+### facebook
+
+Used only for facebook events (not needed for posts, images, etc), to get information using its api.
+
+Name | Type | Description
+-----|------|------------
+`key` | `string` | The access token used to get info from facebook graph API.
+`events_fields` | `string` | Comma-separated list of fields to query for a facebook event. Please refer to [Facebook documentation](https://developers.facebook.com/docs/graph-api/reference/event) for the full list of available fields.
+`videos_fields` | `string` | Comma-separated list of fields to query for a facebook video. Please refer to [Facebook documentation](https://developers.facebook.com/docs/graph-api/reference/event) for the full list of available fields.
+
 ## Example with all options:
 
 The options are passed as the second argument as you can see in the following example:
@@ -137,8 +150,10 @@ The options are passed as the second argument as you can see in the following ex
 $info = Embed::create($url, [
     'min_image_width' => 100,
     'min_image_height' => 100,
-    'images_blacklist' => 'example.com/*',
     'choose_bigger_image' => true,
+    'images_blacklist' => 'example.com/*',
+    'url_blacklist' => 'example.com/*',
+    'follow_canonical' => true,
 
     'html' => [
         'max_images' => 10,
@@ -157,6 +172,11 @@ $info = Embed::create($url, [
 
     'soundcloud' => [
         'key' => 'YOUR_KEY',
+    ],
+
+    'facebook' => [
+        'key' => 'YOUR_KEY',
+        'fields' => 'field1,field2,field3' // default : cover,description,end_time,id,name,owner,place,start_time,timezone
     ],
 ]);
 ```
@@ -198,7 +218,7 @@ class MyDispatcher implements DispatcherInterface
 }
 
 //Use the dispatcher passing as third argument
-$info = Embed::create('http://example.com', [], new MyDispatcher());
+$info = Embed::create('http://example.com', null, new MyDispatcher());
 ```
 
 The default curl dispatcher accepts the same options that the [curl_setopt PHP function](http://php.net/manual/en/function.curl-setopt.php). You can edit the default values:
@@ -219,7 +239,7 @@ $dispatcher = new CurlDispatcher([
     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
 ]);
 
-$info = Embed::create('http://example.com', [], $dispatcher);
+$info = Embed::create('http://example.com', null, $dispatcher);
 ```
 
 ## Accessing to advanced data

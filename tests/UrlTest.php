@@ -24,6 +24,8 @@ class UrlTest extends AbstractTestCase
             ['http://testuser:testpass@test.drupal.dd:8083/tests/authenticated.html', 'http://testuser:testpass@test.drupal.dd:8083/tests/authenticated.html'],
             ['http://testuser:testpass@test.drupal.dd:8083/tests/authenticated.html', 'http://testuser:testpass@test.drupal.dd:8083/tests/authenticated.html'],
             ['http://www.innherred.no/kultur/2017/03/25/On-the-road-med-%C3%86-og-Hagen-14499028.ece', 'http://www.innherred.no/kultur/2017/03/25/On-the-road-med-%C3%86-og-Hagen-14499028.ece'],
+            ['https://pbs.twimg.com/media/CvCZ90BXYAE5q80.png:large', 'https://pbs.twimg.com/media/CvCZ90BXYAE5q80.png:large'],
+            ['http://img.bibo.kz/?7142389.jpg', 'http://img.bibo.kz/?7142389.jpg'],
         ];
     }
 
@@ -84,5 +86,69 @@ class UrlTest extends AbstractTestCase
         $this->assertNull($url->getExtension());
         $this->assertSame('/wiki/Supernatural_%28U.S._TV_series%29', $url->getPath());
         $this->assertSame('Supernatural_(U.S._TV_series)', $url->getDirectoryPosition(1));
+    }
+
+    public function urlMatchProvider()
+    {
+        return [
+            [
+                'http://vimeo.com',
+                'vimeo.com/',
+                true,
+            ],[
+                'http://vimeo.com/69912181',
+                'vimeo.com/*',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                'vimeo.com/*',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                'vimeo.com/69912181',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                'vimeo.com/69912181?*',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                'vimeo.com/69912181?*true',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                'vimeo.com/69912181?*false',
+                false,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                '?play=true',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true',
+                '?*play=true',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true&controls=false',
+                '?&play=true*',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true&controls=false',
+                '?&controls=*',
+                true,
+            ],[
+                'http://vimeo.com/69912181?play=true&controls=false',
+                '?controls=*',
+                false,
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider urlMatchProvider
+     */
+    public function testUrlMatch($url, $pattern, $expected)
+    {
+        $url = Url::create($url);
+        $this->assertSame($expected, $url->match($pattern));
     }
 }
