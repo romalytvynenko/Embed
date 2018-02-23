@@ -313,10 +313,10 @@ class Url
      */
     public function getPath()
     {
-        $path = !empty($this->info['path']) ? '/'.implode('/', array_map('self::urlEncode', $this->info['path'])).'/' : '/';
+        $path = !empty($this->info['path']) ? '/'.implode('/', array_map('static::urlEncode', $this->info['path'])).'/' : '/';
 
         if (isset($this->info['file'])) {
-            $path .= self::urlEncode($this->info['file']);
+            $path .= static::urlEncode($this->info['file']);
 
             if (isset($this->info['extension'])) {
                 $path .= '.'.$this->info['extension'];
