@@ -665,7 +665,7 @@ class Url
         return $parts;
     }
 
-    private static function urlEncode($path)
+    protected static function urlEncode($path)
     {
         // : - used for files
         // @ and , - used for GoogleMaps adapter url (in view and streetview modes)
