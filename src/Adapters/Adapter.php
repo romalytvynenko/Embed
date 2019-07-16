@@ -317,7 +317,12 @@ abstract class Adapter implements DataInterface
         return $this->getFirstFromProviders(function (Provider $provider) use ($blacklist, $homeUrl) {
             $url = $provider->getUrl();
 
-            if ($homeUrl === $url || (!empty($blacklist) && Url::create($url)->match($blacklist))) {
+            try {
+                if ($homeUrl === $url || (!empty($blacklist) && Url::create($url)->match($blacklist))) {
+                    return false;
+                }
+            }
+            catch (\Exception $e) {
                 return false;
             }
 
