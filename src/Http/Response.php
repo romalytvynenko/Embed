@@ -143,7 +143,9 @@ class Response extends AbstractResponse
             list($mime, $charset) = array_map('trim', explode(';', $this->contentType));
 
             $this->contentType = $mime;
-            $this->content = Utils::toUtf8($content, substr(strstr($charset, '='), 1));
+
+            $charset = str_replace(['"', "'"], '', substr(strstr($charset, '='), 1));
+            $this->content = Utils::toUtf8($content, trim($charset));
         }
     }
 }
